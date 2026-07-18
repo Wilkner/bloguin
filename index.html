@@ -307,6 +307,8 @@
         </div>
     </footer>
 <script>
+    const SUPABASE_URL = "https://xyxamtfxbnztpqpgzqsp.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable__OBFaqNzfmxPDB-ViXIEPQ_8adCDoWy";
     const BASE_PATH = "/bloguin";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
@@ -346,7 +348,7 @@ async function carregarVitrine() {
             cronicas.forEach(cronica => {
                 const urlImagem = cronica.capa_url.startsWith('http') 
                   ? cronica.capa_url 
-                  : `${BASE_PATH}/${cronica.capa_url.replace(/^\.\//, '').replace(/^\//, '')}`;                  
+                  : `${BASE_PATH}/${cronica.capa_url.replace(/^\.\//, '').replace(/^\//, '')}`;
                 
                 // 🔥 CORREÇÃO 2: Tratamento cirúrgico de data isolando o fuso horário
                 if (cronica.data_viagem) {
@@ -491,20 +493,32 @@ async function carregarVitrine() {
     }
 
     function renderizarStoryAtual() {
-        if (storiesAtuais.length === 0) return;
-        
-        const story = storiesAtuais[storyIndexAtivo];
-        // 🔥 Garantimos que o caminho seja absoluto a partir da raiz do site
-        let caminhoImagem = story.image;
-        if (!caminhoImagem.startsWith('http')) {
-            caminhoImagem = `${BASE_PATH}/${caminhoImagem.replace(/^\.\//, '').replace(/^\//, '')}`;
-        }
-        imgElement.src = caminhoImagem;
+    // 1. Verificação de segurança: se não houver stories, para aqui.
+    if (storiesAtuais.length === 0) return;
     
+    // 2. Garante que buscamos o elemento dentro da função, no momento do clique.
     const imgElement = document.getElementById("storyImg");
+    const legendaElement = document.getElementById("storyLegenda");
+    const contadorElement = document.getElementById("storiesContador");
+
+    if (!imgElement) {
+        console.error("Elemento 'storyImg' não encontrado no DOM!");
+        return;
+    }
+
+    const story = storiesAtuais[storyIndexAtivo];
+    
+    // 3. Montagem do caminho (aplicando a lógica de raiz que discutimos)
+    let caminhoImagem = story.image;
+    if (!caminhoImagem.startsWith('http')) {
+        // Remove ./ ou / inicial e limpa o caminho para ficar relativo à pasta do projeto
+        caminhoImagem = caminhoImagem.replace(/^\.\//, '').replace(/^\//, '');
+    }
+    
+    // 4. Aplicação segura
     imgElement.src = caminhoImagem;
-    document.getElementById("storyLegenda").innerText = story.legenda;
-    document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+    legendaElement.innerText = story.legenda;
+    contadorElement.innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
     }
 
     function navegarStories(direcao) {
