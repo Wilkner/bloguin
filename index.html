@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloguin — Crônicas de Viagem Premium</title>
+    <title>Bloguin — Crônicas de Viagem</title>
     
     <!-- SDK Oficial do Supabase e Parser do Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -258,9 +258,9 @@
 
             <!-- Seletor Jamstack de Modos -->
             <div class="modo-selector">
-                <button class="tab-btn active" onclick="mudarModo('stories')" id="tab-stories">📸 Stories</button>
+                <button class="tab-btn active" onclick="mudarModo('stories')" id="tab-stories">📸 Fotos</button>
                 <button class="tab-btn" onclick="mudarModo('artigo')" id="tab-artigo">✍️ Artigo Inteiro</button>
-                <button class="tab-btn" onclick="mudarModo('video')" id="tab-video">🎥 Vídeo Premium</button>
+                <button class="tab-btn" onclick="mudarModo('video')" id="tab-video">🎥 Vídeo </button>
             </div>
 
             <div class="modal-conteudo">
@@ -453,6 +453,7 @@
             
             // 🔥 CORREÇÃO BLINDADA: Limpa chaves do objeto meta para garantir compatibilidade GitHub/Windows
             const meta = {};
+            console.log("DEBUG VÍDEO: Link detectado =", meta.video);
             if (payload.meta) {
                 Object.keys(payload.meta).forEach(key => {
                     // Remove qualquer caractere que não seja letra ou número
