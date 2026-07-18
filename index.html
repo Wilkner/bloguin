@@ -435,17 +435,22 @@
             if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
             
             const textoPuro = await response.text();
-            const payload = parseFrontMatter(textoPuro);
             
-            // 🔥 CORREÇÃO BLINDADA: Limpa chaves do objeto meta para garantir compatibilidade GitHub/Windows
+            // 🔥 LEITOR MANUAL ROBUSTO (Ignora o parseFrontMatter que está falhando)
             const meta = {};
-            if (payload.meta) {
-                Object.keys(payload.meta).forEach(key => {
-                    // Remove qualquer caractere que não seja letra ou número
-                    const cleanKey = key.replace(/[^a-zA-Z0-9]/g, ''); 
-                    meta[cleanKey] = payload.meta[key];
-                });
-            }
+            const linhas = textoPuro.split('\n');
+            linhas.forEach(linha => {
+                if (linha.includes(':')) {
+                    const [chave, ...valor] = linha.split(':');
+                    // Limpa a chave (remove tudo que não for letra/número)
+                    const chaveLimpa = chave.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    // Junta o valor (caso contenha dois pontos na URL ou texto)
+                    const valorLimpo = valor.join(':').trim();
+                    if (chaveLimpa && valorLimpo) {
+                        meta[chaveLimpa] = valorLimpo.replace(/---/g, ''); // Remove delimitadores residuais
+                    }
+                }
+            });
             console.log("META LIMPO PARA USO:", meta);
 
             // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda de forma consistente
