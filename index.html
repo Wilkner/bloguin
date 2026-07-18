@@ -318,60 +318,68 @@
 
     document.addEventListener("DOMContentLoaded", carregarVitrine);
 
-async function carregarVitrine() {
-        try {
-            const container = document.getElementById("vitrineGrid");
-            const loading = document.getElementById("loadingStatus");
-
-            if (!container) return;
-
-            // 🔥 CORREÇÃO 1: Adicionamos 'nullsFirst: false' para garantir que registros sem data fiquem no final
-            const { data: cronicas, error } = await supabaseClient
-                .from('cronicas')
-                .select('*')
-                .order('data_viagem', { ascending: false, nullsFirst: false });
-
-            if (error) {
-                container.innerHTML = `<p class="erro">Erro ao carregar relatos.</p>`;
-                console.error(error);
-                return;
-            }
-
-            if (loading) loading.style.display = "none";
-            container.innerHTML = ""; 
-
-            if (!cronicas || cronicas.length === 0) {
-                container.innerHTML = `<p class="aviso">Nenhum diário de bordo encontrado.</p>`;
-                return;
-            }
-
-            cronicas.forEach(cronica => {
-                const urlImagem = cronica.capa_url.startsWith('http') 
-                  ? cronica.capa_url 
-                  : `${BASE_PATH}/${cronica.capa_url.replace(/^\.\//, '').replace(/^\//, '')}`;
-                
-                // 🔥 CORREÇÃO 2: Tratamento cirúrgico de data isolando o fuso horário
-                if (cronica.data_viagem) {
-                    // Divide a string "YYYY-MM-DD" para evitar distorção de fuso do Javascript
-                    const [ano, mes, dia] = cronica.data_viagem.split('-');
-                    dataFormatada = `${dia}/${mes}/${ano}`;
-                }
-
-                container.innerHTML += `
-                    <div class="card" onclick="abrirModal('${cronica.id}', '${cronica.titulo}', '${cronica.destino}', '${cronica.arquivo_path}')">
-                        <img src="${cronica.capa_url}" class="card-capa" alt="${cronica.titulo}">
-                        <div class="card-corpo">
-                            <span class="card-destino">📍 ${cronica.cidade || cronica.destino} | ${dataFormatada || 'Data não definida'}</span>
-                            <h3 class="card-titulo">${cronica.titulo}</h3>
-                        </div>
-                    </div>
-                `;
-            });
-
-        } catch (err) {
-            console.error("Erro na vitrine:", err);
-        }
+    function normalizarCaminho(path) {
+        if (!path || path.startsWith('http')) return path;
+        const isGitHubPages = window.location.hostname.includes("github.io");
+        const BASE_PATH = isGitHubPages ? "/bloguin" : "";
+        
+        // Remove barras iniciais e ./ para limpar o caminho
+        let pathLimpo = path.replace(/^\.\//, '').replace(/^\//, '');
+        return `${BASE_PATH}/${pathLimpo}`;
     }
+
+
+
+    // 1. Vitrine Corrigida
+ async function carregarVitrine() {
+    try {
+        const container = document.getElementById("vitrineGrid");
+        const loading = document.getElementById("loadingStatus");
+
+        if (!container) return;
+
+        const { data: cronicas, error } = await supabaseClient
+            .from('cronicas')
+            .select('*')
+            .order('data_viagem', { ascending: false, nullsFirst: false });
+
+        if (error) {
+            container.innerHTML = `<p class="erro">Erro ao carregar relatos.</p>`;
+            return;
+        }
+
+        if (loading) loading.style.display = "none";
+        container.innerHTML = ""; 
+
+        if (!cronicas || cronicas.length === 0) {
+            container.innerHTML = `<p class="aviso">Nenhum diário de bordo encontrado.</p>`;
+            return;
+        }
+
+        cronicas.forEach(cronica => {
+            const urlImagem = normalizarCaminho(cronica.capa_url);
+            
+            // 🔥 CORREÇÃO: A variável precisa ser definida aqui dentro para cada loop
+            let dataFormatada = 'Data não definida';
+            if (cronica.data_viagem) {
+                const [ano, mes, dia] = cronica.data_viagem.split('-');
+                dataFormatada = `${dia}/${mes}/${ano}`;
+            }
+
+            container.innerHTML += `
+                <div class="card" onclick="abrirModal('${cronica.id}', '${cronica.titulo}', '${cronica.destino}', '${cronica.arquivo_path}')">
+                    <img src="${urlImagem}" class="card-capa" alt="${cronica.titulo}">
+                    <div class="card-corpo">
+                        <span class="card-destino">📍 ${cronica.cidade || cronica.destino} | ${dataFormatada}</span>
+                        <h3 class="card-titulo">${cronica.titulo}</h3>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (err) {
+        console.error("Erro na vitrine:", err);
+    }
+}
 
     function parseFrontMatter(textoPuro) {
         const partes = textoPuro.split("---");
@@ -492,42 +500,19 @@ async function carregarVitrine() {
         }
     }
 
+    // 2. Stories Corrigido
     function renderizarStoryAtual() {
-            // 1. Verificação de segurança: se não houver stories, para aqui.
-            if (storiesAtuais.length === 0) return;
-            
-            const imgElement = document.getElementById("storyImg");
-            const legendaElement = document.getElementById("storyLegenda");
-            const contadorElement = document.getElementById("storiesContador");
-
-            if (!imgElement) {
-                console.error("Elemento 'storyImg' não encontrado no DOM!");
-                return;
-            }
-
-            const story = storiesAtuais[storyIndexAtivo];
-            
-            // 2. Montagem inteligente do caminho (Detector de Ambiente)
-            // Detecta se estamos no GitHub Pages para aplicar o /bloguin
-            const isGitHubPages = window.location.hostname.includes("github.io");
-            const BASE_PATH = isGitHubPages ? "/bloguin" : ""; 
-            
-            let caminhoImagem = story.image;
-            
-            // Se não for um link externo (http), tratamos como arquivo local
-            if (!caminhoImagem.startsWith('http')) {
-                // Remove ./ ou / inicial e limpa o caminho para ficar relativo à pasta do projeto
-                let pathLimpo = caminhoImagem.replace(/^\.\//, '').replace(/^\//, '');
-                
-                // Monta o caminho: se for GitHub, insere o /bloguin, se for local, apenas o path
-                caminhoImagem = isGitHubPages ? `${BASE_PATH}/${pathLimpo}` : pathLimpo;
-            }    
-            
-            // 3. Aplicação segura
-            imgElement.src = caminhoImagem;
-            legendaElement.innerText = story.legenda;
-            contadorElement.innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
-        }
+        if (storiesAtuais.length === 0) return;
+        
+        const imgElement = document.getElementById("storyImg");
+        const story = storiesAtuais[storyIndexAtivo];
+        
+        // 🔥 Usa a mesma normalização para garantir consistência
+        imgElement.src = normalizarCaminho(story.image);
+        
+        document.getElementById("storyLegenda").innerText = story.legenda;
+        document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+    }
 
     function navegarStories(direcao) {
         storyIndexAtivo += direcao;
