@@ -435,6 +435,7 @@
             if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
             
             const textoPuro = await response.text();
+            const payload = parseFrontMatter(textoPuro);
             
             // 🔥 LEITOR MANUAL ROBUSTO (Ignora o parseFrontMatter que está falhando)
             const meta = {};
