@@ -128,9 +128,11 @@ async def publicar_cronica(
 
         # Salvamento físico do vídeo se houver
         video_path_str = ""
-        if video and video.filename:
+        if video and hasattr(video, 'filename') and video.filename:
+            # Caso ainda queira enviar arquivos menores que 50mb localmente
             video_ext = os.path.splitext(video.filename)[1] or ".mp4"
             video_path_str = f"assets/videos/{id_cronica}{video_ext}"
+            # Como colocamos a pasta assets/videos/ no .gitignore, ela roda local mas não vai pro Git
             with open(video_path_str, "wb") as buffer:
                 shutil.copyfileobj(video.file, buffer)
 

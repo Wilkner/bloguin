@@ -403,6 +403,8 @@
         return { meta, corpo };
     }
 
+    
+
 async function abrirModal(id, titulo, destino, arquivoPath) {
     cronicaAtivaId = id;
     
@@ -427,6 +429,9 @@ async function abrirModal(id, titulo, destino, arquivoPath) {
         const textoPuro = await response.text();
         const payload = parseFrontMatter(textoPuro);
 
+        // 🔥 INSIRA O LOG AQUI
+        console.log("DEBUG - Payload capturado:", payload);
+        
         // Alimenta os Stories
         const arrayImagens = payload.meta.image ? payload.meta.image.split(",") : [];
         const arrayLegendas = payload.meta.legenda ? payload.meta.legenda.split(",") : [];
