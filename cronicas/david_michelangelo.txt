@@ -1,12 +1,17 @@
 ---
-date: 2026-06-14
-destination: Itália - Florença
+title: O David de Michelangelo ressignificou o que eu entendia sobre dedicação
+destino: Itália - Florença
+cidade: Florença
+data_viagem: 2026-06-14
+ia_texto: False
+ia_video: True
+ia_stories: False
 image: assets/images/david_michelangelo.jpg
-video: https://drive.google.com/file/d/1N-I1sNK8mNMACrRzyKm228r0hThY0A8v/view?usp=drive_open
-camera: Galaxy S24 Ultra
+video: https://drive.google.com/file/d/1fUV5WtwPwuwoxPm3YhnrCsmHX6M8DK3d/view
+legenda: David de Michelangelo
+camera: samsung Galaxy S24 Ultra
 latitude: 43.776718
 longitude: 11.259329
-legenda: David de Michelangelo
 ---
 
 # O David de Michelangelo ressignificou o que eu entendia sobre dedicação
