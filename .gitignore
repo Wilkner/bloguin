@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+admin.html
+# Adicione isso no final do seu arquivo .gitignore
+assets/videos/

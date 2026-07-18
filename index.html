@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloguin — Crônicas de Viagem Premium</title>
+    
+    <!-- SDK Oficial do Supabase e Parser do Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --border: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        header h1 { font-size: 36px; margin-bottom: 8px; font-weight: 800; }
+        header p { color: var(--text-muted); font-size: 18px; margin-top: 0; }
+
+        .portal-grid {
+            max-width: 1100px;
+            margin: 0 auto 60px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .card-capa {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            object-position: top;
+            background-color: #090d16;
+        }
+
+        .card-corpo { padding: 20px; }
+        .card-destino { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        .card-titulo { font-size: 20px; margin: 8px 0; font-weight: 700; }
+
+        /* Modal Multimodal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(15, 23, 42, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-titulo-bloco h2 { margin: 0; font-size: 22px; }
+        .modal-titulo-bloco span { font-size: 13px; color: var(--text-muted); }
+
+        .btn-fechar {
+            background: none; border: none; color: var(--text);
+            font-size: 28px; cursor: pointer; padding: 0 10px;
+        }
+
+        .modo-selector {
+            display: flex;
+            background-color: var(--bg);
+            padding: 6px;
+            gap: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1; background: none; border: none; color: var(--text-muted);
+            padding: 12px; font-weight: 600; font-size: 14px; cursor: pointer;
+            border-radius: 6px; transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--card-bg); color: var(--text);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .modal-conteudo { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
+        .painel-modo { display: none; }
+        .painel-modo.active { display: block; }
+
+        .stories-layout { text-align: center; max-width: 600px; margin: 0 auto; }
+        .stories-img { max-width: 100%; max-height: 50vh; border-radius: 8px; object-fit: contain; }
+        .stories-legenda { font-size: 18px; margin-top: 20px; color: #cbd5e1; line-height: 1.6; font-style: italic; }
+
+        .artigo-layout { max-width: 750px; margin: 0 auto; line-height: 1.8; font-size: 16px; color: #cbd5e1; }
+        .artigo-layout h1, .artigo-layout h2 { color: var(--text); }
+        .meta-camera-gps { background: var(--bg); padding: 12px 20px; border-radius: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 25px; display: flex; gap: 20px; }
+
+        .video-layout video { width: 100%; max-height: 55vh; border-radius: 8px; background: #000; }
+
+        .bloco-reacoes {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            background-color: var(--card-bg);
+        }
+
+        .btn-reacao {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.1s, border-color 0.2s;
+        }
+
+        .btn-reacao:hover { border-color: var(--accent); transform: scale(1.05); }
+        .btn-reacao:active { transform: scale(0.95); }
+
+        #loadingStatus { text-align: center; color: var(--text-muted); margin: 40px; font-size: 18px; }
+        
+        .artigo-layout img {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: 550px;
+            object-fit: contain;
+            background-color: #090d16;
+            border-radius: 8px;
+            margin: 25px auto;
+            display: block;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Classes utilitárias para os avisos de IA contextuais */
+        .ia-disclosure {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: #1e293b;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+            border: 1px solid var(--border);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<header style="max-width: 800px; margin: 60px auto 40px auto; padding: 0 20px; text-align: center;">
+        <h1 style="font-size: 42px; margin-bottom: 16px; font-weight: 800; letter-spacing: -1px;">🚀 Bloguin</h1>
+        
+        <p style="color: var(--text); font-size: 20px; font-weight: 600; line-height: 1.4; margin-bottom: 16px;">
+            oi, Wilkner aqui!
+        </p>
+        <p style="color: var(--text); font-size: 20px; font-weight: 600; line-height: 1.4; margin-bottom: 16px;">
+            Bem-vindo(a) ao meu blog pessoal de viagens!
+        </p>
+        <p style="color: var(--text-muted); font-size: 16px; line-height: 1.6; max-width: 650px; margin: 0 auto;">
+            Aqui partilho as minhas histórias, sentimentos e perrengues pelo mundo. Para tornar a sua experiência única, você pode conferir meus momentos interessantes de acordo com o 
+            <span style="color: var(--accent); font-weight: 700;">SEU formato de consumo favorito</span>: 
+            leia a <strong>crônica detalhada</strong>, veja as fotos nos meus <strong>Stories</strong> ou assista ao <strong>vídeo da história</strong>. Escolha como quer viajar comigo!
+        </p>
+    </header>
+
+    <div id="loadingStatus">Carregando diários de bordo...</div>
+    <div class="portal-grid" id="vitrineGrid"></div>
+
+    <!-- MODAL MULTIMODAL UNIFICADO -->
+    <div class="modal-overlay" id="multimodalModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-titulo-bloco">
+                    <h2 id="modalTitulo">Título da Crônica</h2>
+                    <span id="modalMetaSub">Destino</span>
+                </div>
+                <button class="btn-fechar" onclick="fecharModal()">&times;</button>
+            </div>
+
+            <!-- Seletor Jamstack de Modos -->
+            <div class="modo-selector">
+                <button class="tab-btn active" onclick="mudarModo('stories')" id="tab-stories">📸 Stories</button>
+                <button class="tab-btn" onclick="mudarModo('artigo')" id="tab-artigo">✍️ Artigo Inteiro</button>
+                <button class="tab-btn" onclick="mudarModo('video')" id="tab-video">🎥 Vídeo Premium</button>
+            </div>
+
+            <div class="modal-conteudo">
+              
+            <!-- MODO STORIES COM NAVEGAÇÃO -->
+            <div id="modo-stories" class="painel-modo active">
+                <div class="stories-layout" style="position: relative;">
+                    <img id="storyImg" src="" alt="Foto de capa" class="stories-img">
+                    <p id="storyLegenda" class="stories-legenda"></p>
+                    
+                    <!-- Botões de Navegação Flutuantes -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                        <button onclick="navegarStories(-1)" style="background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">◀ Voltar</button>
+                        <span id="storiesContador" style="color: var(--text-muted); font-size: 14px; align-self: center;">1 / 1</span>
+                        <button onclick="navegarStories(1)" style="background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">Avançar ▶</button>
+                    </div>
+
+                    <!-- 🌟 OS METADADOS EXIF AGORA FICAM AQUI NO STORIES! -->
+                    <div class="meta-camera-gps" style="background: var(--bg); padding: 12px 20px; border-radius: 8px; font-size: 13px; color: var(--text-muted); margin-top: 25px; display: flex; justify-content: center; gap: 20px; border: 1px solid var(--border);">
+                        <span id="metaCamera">📸 Câmera: --</span>
+                        <span id="metaCoordenadas">📍 GPS: --</span>
+                    </div>
+                    
+                    <!-- Container para o aviso de IA dos Stories -->
+                    <div id="storiesIAContainer"></div>
+                </div>
+            </div>
+
+            <!-- MODO ARTIGO -->
+            <div id="modo-artigo" class="painel-modo">
+                <div class="artigo-layout">
+                    <!-- 💡 LIMPO: Bloco de metadados removido daqui para focar na leitura pura -->
+                    <div id="artigoCorpo"></div>
+                    <div id="artigoIAContainer"></div>
+                </div>
+            </div>
+
+                <!-- MODO VÍDEO -->
+                <div id="modo-video" class="painel-modo">
+                    <div class="video-layout">
+                        <video id="playerVideo" controls src=""></video>
+                        <!-- Container para o aviso de IA do Vídeo -->
+                        <div id="videoIAContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REAÇÕES -->
+            <div class="bloco-reacoes">
+                <button class="btn-reacao" onclick="computarReacao('🔥')">🔥 <span id="cont-🔥">0</span></button>
+                <button class="btn-reacao" onclick="computarReacao('❤️')">❤️ <span id="cont-❤️">0</span></button>
+                <button class="btn-reacao" onclick="computarReacao('😂')">😂 <span id="cont-😂">0</span></button>
+            </div>
+        </div>    
+    </div>
+<!-- 🌍 RODAPÉ DESIGN PREMIUM — BLOGUIN -->
+    <footer style="margin-top: 80px; padding: 40px 20px; border-top: 1px solid var(--border); background-color: #090d16; text-align: center;">
+        <div style="max-width: 1100px; margin: 0 auto;">
+            <h4 style="font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0 0 10px 0; letter-spacing: 0.5px;">
+                © 2026 Bloguin. Todos os direitos reservados — Proibida reprodução sem autorização prévia.
+            </h4>
+            <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin: 0;">
+                📬 Dúvidas? Me mande um e-mail: 
+                <a href="mailto:wilkner@gmail.com" style="color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); transition: color 0.2s; padding-bottom: 2px;">
+                    wilkner@gmail.com
+                </a>
+            </h4>
+        </div>
+    </footer>
+<script>
+    const SUPABASE_URL = "https://xyxamtfxbnztpqpgzqsp.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable__OBFaqNzfmxPDB-ViXIEPQ_8adCDoWy";
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let cronicaAtivaId = null;
+    let storiesAtuais = [];
+    let storyIndexAtivo = 0; 
+
+    document.addEventListener("DOMContentLoaded", carregarVitrine);
+
+async function carregarVitrine() {
+        try {
+            const container = document.getElementById("vitrineGrid");
+            const loading = document.getElementById("loadingStatus");
+
+            if (!container) return;
+
+            // 🔥 CORREÇÃO 1: Adicionamos 'nullsFirst: false' para garantir que registros sem data fiquem no final
+            const { data: cronicas, error } = await supabaseClient
+                .from('cronicas')
+                .select('*')
+                .order('data_viagem', { ascending: false, nullsFirst: false });
+
+            if (error) {
+                container.innerHTML = `<p class="erro">Erro ao carregar relatos.</p>`;
+                console.error(error);
+                return;
+            }
+
+            if (loading) loading.style.display = "none";
+            container.innerHTML = ""; 
+
+            if (!cronicas || cronicas.length === 0) {
+                container.innerHTML = `<p class="aviso">Nenhum diário de bordo encontrado.</p>`;
+                return;
+            }
+
+            cronicas.forEach(cronica => {
+                let dataFormatada = '';
+                
+                // 🔥 CORREÇÃO 2: Tratamento cirúrgico de data isolando o fuso horário
+                if (cronica.data_viagem) {
+                    // Divide a string "YYYY-MM-DD" para evitar distorção de fuso do Javascript
+                    const [ano, mes, dia] = cronica.data_viagem.split('-');
+                    dataFormatada = `${dia}/${mes}/${ano}`;
+                }
+
+                container.innerHTML += `
+                    <div class="card" onclick="abrirModal('${cronica.id}', '${cronica.titulo}', '${cronica.destino}', '${cronica.arquivo_path}')">
+                        <img src="${cronica.capa_url}" class="card-capa" alt="${cronica.titulo}">
+                        <div class="card-corpo">
+                            <span class="card-destino">📍 ${cronica.cidade || cronica.destino} | ${dataFormatada || 'Data não definida'}</span>
+                            <h3 class="card-titulo">${cronica.titulo}</h3>
+                        </div>
+                    </div>
+                `;
+            });
+
+        } catch (err) {
+            console.error("Erro na vitrine:", err);
+        }
+    }
+
+    function parseFrontMatter(textoPuro) {
+        const partes = textoPuro.split("---");
+        if (partes.length < 3) return { meta: {}, corpo: textoPuro };
+        
+        const blocoMeta = partes[1];
+        const corpo = partes.slice(2).join("---").trim();
+        
+        const linhas = blocoMeta.split("\n");
+        const meta = {};
+        
+        linhas.forEach(linha => {
+            const index = linha.indexOf(":");
+            if (index !== -1) {
+                const chave = linha.substring(0, index).trim();
+                const valor = linha.substring(index + 1).trim();
+                meta[chave] = valor;
+            }
+        });
+        
+        return { meta, corpo };
+    }
+
+    async function abrirModal(id, titulo, destino, arquivoPath) {
+        cronicaAtivaId = id;
+        
+        document.getElementById("modalTitulo").innerText = titulo; 
+        document.getElementById("modalMetaSub").innerText = destino;
+
+        // Limpa avisos de IA antigos antes de renderizar os novos
+        document.getElementById("artigoIAContainer").innerHTML = "";
+        document.getElementById("videoIAContainer").innerHTML = "";
+        document.getElementById("storiesIAContainer").innerHTML = "";
+
+        try {
+            atualizarContadoresLocais();
+
+            const response = await fetch(arquivoPath);
+            if (!response.ok) throw new Error("Não encontrou o arquivo físico da crônica.");
+            
+            const textoPuro = await response.text();
+            const payload = parseFrontMatter(textoPuro);
+
+            // Alimenta os Stories
+            const arrayImagens = payload.meta.image ? payload.meta.image.split(",") : [];
+            const arrayLegendas = payload.meta.legenda ? payload.meta.legenda.split(",") : [];
+
+            storiesAtuais = arrayImagens.map((img, index) => ({
+                image: img.trim(),
+                legenda: arrayLegendas[index] ? arrayLegendas[index].trim() : (arrayLegendas[0] || "Sem legenda.")
+            }));
+
+            storyIndexAtivo = 0;
+            renderizarStoryAtual();
+
+            // 📸 METADADOS EXIF ENVIADOS PARA O CARROSSEL (Gera o link dinâmico do Maps)
+            document.getElementById("metaCamera").innerText = `📸 Câmera: ${payload.meta.camera || "Desconhecida"}`;
+            
+            const lat = payload.meta.latitude;
+            const lon = payload.meta.longitude;
+            const coordenadasContainer = document.getElementById("metaCoordenadas");
+
+            if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
+                coordenadasContainer.innerHTML = `
+                    <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
+                        📍 Ver localização no Google Maps
+                    </a>
+                `;
+            } else {
+                coordenadasContainer.innerText = "📍 GPS: Indisponível";
+            }
+
+            // ✍️ Alimenta o Artigo (Focado puramente no texto literário agora)
+            document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
+
+            // Aviso de IA no Artigo
+            if (payload.meta.ia_texto === "True" || payload.meta.ia_texto === "true") {
+                document.getElementById("artigoIAContainer").innerHTML = `
+                    <div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">
+                        🤖 <strong>Content Credentials:</strong> Esta narrativa literária foi co-criada ou revisada com auxílio de Inteligência Artificial.
+                    </div>`;
+            }
+
+            // 🎥 Alimenta o Vídeo
+            const btnVideo = document.getElementById("tab-video");
+            const player = document.getElementById("playerVideo");
+            
+            if (payload.meta.ia_video === "True" || payload.meta.ia_video === "true") {
+                document.getElementById("videoIAContainer").innerHTML = `
+                    <div class="ia-disclosure" style="border-left: 3px solid #e11d48;">
+                        🎬 <strong>Nota de Transparência:</strong> Este elemento de vídeo contém modificações ou geração por Inteligência Artificial.
+                    </div>`;
+            }
+
+            if (payload.meta.video) {
+                btnVideo.disabled = false;
+                btnVideo.style.opacity = "1";
+                player.src = payload.meta.video;
+            } else {
+                btnVideo.disabled = true;
+                btnVideo.style.opacity = "0.3";
+                player.src = "";
+            }
+
+            // Aviso nos Stories
+            if (payload.meta.ia_stories === "True" || payload.meta.ia_stories === "true") {
+                document.getElementById("storiesIAContainer").innerHTML = `
+                    <div class="ia-disclosure" style="text-align: center; border-left: 3px solid #10b981;">
+                        ✨ Mídias do Stories editadas com assistência ou filtros de IA.
+                    </div>`;
+            }
+
+            mudarModo('stories');
+            document.getElementById("multimodalModal").style.display = "flex";
+
+        } catch (err) {
+            alert("Erro ao abrir relato: " + err.message);
+        }
+    }
+
+    function renderizarStoryAtual() {
+        if (storiesAtuais.length === 0) return;
+        
+        const story = storiesAtuais[storyIndexAtivo];
+        document.getElementById("storyImg").src = story.image;
+        document.getElementById("storyLegenda").innerText = story.legenda;
+        document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+    }
+
+    function navegarStories(direcao) {
+        storyIndexAtivo += direcao;
+        if (storyIndexAtivo < 0) storyIndexAtivo = storiesAtuais.length - 1;
+        if (storyIndexAtivo >= storiesAtuais.length) storyIndexAtivo = 0;
+        renderizarStoryAtual();
+    }
+        
+    function mudarModo(modo) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.painel-modo').forEach(painel => painel.classList.remove('active'));
+
+        document.getElementById(`tab-${modo}`).classList.add('active');
+        document.getElementById(`modo-${modo}`).classList.add('active');
+
+        if (modo !== 'video') {
+            document.getElementById("playerVideo").pause();
+        }
+    }
+
+    async function atualizarContadoresLocais() {
+        const { data, error } = await supabaseClient
+            .from('reacoes')
+            .select('emoji, contador')
+            .eq('cronica_id', cronicaAtivaId);
+
+        if (!error && data) {
+            ['🔥', '❤️', '😂'].forEach(em => document.getElementById(`cont-${em}`).innerText = 0);
+            data.forEach(row => {
+                const elemento = document.getElementById(`cont-${row.emoji}`);
+                if (elemento) elemento.innerText = row.contador;
+            });
+        }
+    }
+
+    async function computarReacao(emojiAlvo) {
+        if (!cronicaAtivaId) return;
+
+        const campo = document.getElementById(`cont-${emojiAlvo}`);
+        const valorAtual = parseInt(campo.innerText) || 0;
+        const novoValor = valorAtual + 1;
+
+        campo.innerText = novoValor;
+
+        await supabaseClient
+            .from('reacoes')
+            .upsert({ 
+                cronica_id: cronicaAtivaId, 
+                emoji: emojiAlvo, 
+                contador: novoValor 
+            }, { onConflict: 'cronica_id,emoji' });
+    }
+
+    function fecharModal() {
+        document.getElementById("multimodalModal").style.display = "none";
+        document.getElementById("playerVideo").pause();
+        cronicaAtivaId = null;
+    }
+</script>
+</body>
+</html>
