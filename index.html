@@ -417,83 +417,112 @@
 
     
 
-async function abrirModal(id, titulo, destino, arquivoPath) {
-    cronicaAtivaId = id;
-    
-    document.getElementById("modalTitulo").innerText = titulo; 
-    document.getElementById("modalMetaSub").innerText = destino;
-
-    document.getElementById("artigoIAContainer").innerHTML = "";
-    document.getElementById("videoIAContainer").innerHTML = "";
-    document.getElementById("storiesIAContainer").innerHTML = "";
-
-    try {
-        atualizarContadoresLocais();
-
-        const caminhoCorreto = normalizarCaminho(arquivoPath);
-        const response = await fetch(caminhoCorreto);
-        if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
+    async function abrirModal(id, titulo, destino, arquivoPath) {
+        cronicaAtivaId = id;
         
-        const textoPuro = await response.text();
-        const payload = parseFrontMatter(textoPuro);
-        
-        // 🔥 CORREÇÃO DE PLATAFORMA (Blindada): 
-        // Remove absolutamente tudo que não for letra ou número da chave
-        const meta = {};
-        if (payload.meta) {
-            Object.keys(payload.meta).forEach(key => {
-                // Regex: remove qualquer coisa que não seja A-Z, a-z ou 0-9
-                const cleanKey = key.replace(/[^a-zA-Z0-9]/g, ''); 
-                meta[cleanKey] = payload.meta[key];
-            });
-        }
-        console.log("META LIMPO PARA USO:", meta);
+        document.getElementById("modalTitulo").innerText = titulo; 
+        document.getElementById("modalMetaSub").innerText = destino;
 
-        // ... (O restante da sua lógica de storiesData continua igual)
-        let storiesData = [];
-        if (meta.image) {
-            const imgs = meta.image.split(",");
-            const legs = meta.legenda ? meta.legenda.split(",") : [];
-            storiesData = imgs.map((img, i) => ({
-                image: img.trim(),
-                legenda: legs[i] ? legs[i].trim() : (meta.titulo || "Foto do relato")
-            }));
-        } else {
-            const regexImg = /!\[(.*?)\]\((.*?)\)/g;
-            let match;
-            while ((match = regexImg.exec(payload.corpo)) !== null) {
-                storiesData.push({
-                    image: match[2].trim(),
-                    legenda: match[1].trim() || "Foto do relato"
+        document.getElementById("artigoIAContainer").innerHTML = "";
+        document.getElementById("videoIAContainer").innerHTML = "";
+        document.getElementById("storiesIAContainer").innerHTML = "";
+
+        try {
+            atualizarContadoresLocais();
+
+            const caminhoCorreto = normalizarCaminho(arquivoPath);
+            const response = await fetch(caminhoCorreto);
+            if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
+            
+            const textoPuro = await response.text();
+            const payload = parseFrontMatter(textoPuro);
+            
+            // 🔥 CORREÇÃO BLINDADA: Limpa chaves do objeto meta para garantir compatibilidade GitHub/Windows
+            const meta = {};
+            if (payload.meta) {
+                Object.keys(payload.meta).forEach(key => {
+                    // Remove qualquer caractere que não seja letra ou número
+                    const cleanKey = key.replace(/[^a-zA-Z0-9]/g, ''); 
+                    meta[cleanKey] = payload.meta[key];
                 });
             }
+            console.log("META LIMPO PARA USO:", meta);
+
+            // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda de forma consistente
+            let storiesData = [];
+            if (meta.image) {
+                const imgs = meta.image.split(",");
+                const legs = meta.legenda ? meta.legenda.split(",") : [];
+                storiesData = imgs.map((img, i) => ({
+                    image: img.trim(),
+                    legenda: legs[i] ? legs[i].trim() : (meta.titulo || "Foto do relato")
+                }));
+            } else {
+                const regexImg = /!\[(.*?)\]\((.*?)\)/g;
+                let match;
+                while ((match = regexImg.exec(payload.corpo)) !== null) {
+                    storiesData.push({
+                        image: match[2].trim(),
+                        legenda: match[1].trim() || "Foto do relato"
+                    });
+                }
+            }
+
+            storiesAtuais = storiesData;
+
+            // Força a renderização após o modal estar montado
+            storyIndexAtivo = 0;
+            setTimeout(() => {
+                renderizarStoryAtual();
+            }, 100);
+
+            // 📸 METADADOS EXIF SANITIZADOS
+            document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
+            
+            const lat = meta.latitude;
+            const lon = meta.longitude;
+            const coordenadasContainer = document.getElementById("metaCoordenadas");
+
+            if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
+                coordenadasContainer.innerHTML = `
+                    <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
+                        📍 Ver localização no Google Maps
+                    </a>
+                `;
+            } else {
+                coordenadasContainer.innerText = "📍 GPS: Indisponível";
+            }
+
+            // ✍️ Alimenta o Artigo
+            document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
+
+            // Avisos de IA
+            if (meta.iatexto === "True" || meta.iatexto === "true") {
+                document.getElementById("artigoIAContainer").innerHTML = `<div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">🤖 <strong>Content Credentials:</strong> Esta narrativa foi co-criada com auxílio de IA.</div>`;
+            }
+
+            // 🎥 Alimenta o Vídeo
+            const btnVideo = document.getElementById("tab-video");
+            const player = document.getElementById("playerVideo");
+            
+            if (meta.video) {
+                btnVideo.disabled = false;
+                btnVideo.style.opacity = "1";
+                player.src = normalizarCaminho(meta.video);
+            } else {
+                btnVideo.disabled = true;
+                btnVideo.style.opacity = "0.3";
+                player.src = "";
+            }
+
+            mudarModo('stories');
+            document.getElementById("multimodalModal").style.display = "flex";
+
+        } catch (err) {
+            console.error("Erro ao abrir relato:", err);
+            alert("Erro ao abrir relato: " + err.message);
         }
-
-        storiesAtuais = storiesData;
-        storyIndexAtivo = 0;
-        setTimeout(() => renderizarStoryAtual(), 100);
-
-        // 📸 METADADOS AGORA ACESSÍVEIS
-        // Como limpamos as chaves, meta.camera e meta.latitude VÃO funcionar
-        document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
-        
-        const lat = meta.latitude;
-        const lon = meta.longitude;
-        const coordenadasContainer = document.getElementById("metaCoordenadas");
-
-        if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
-            coordenadasContainer.innerHTML = `
-                <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
-                    📍 Ver localização no Google Maps
-                </a>
-            `;
-        } else {
-            coordenadasContainer.innerText = "📍 GPS: Indisponível";
-        }
-
-        document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
-
-        // ... (resto da função continua igual)
+    }
 
     // 2. Stories Corrigido
 function renderizarStoryAtual() {
