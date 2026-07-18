@@ -437,24 +437,23 @@
             const textoPuro = await response.text();
             const payload = parseFrontMatter(textoPuro);
             
-            // 🔥 LEITOR MANUAL ROBUSTO (Ignora o parseFrontMatter que está falhando)
+            // 🔥 EXTRAÇÃO BLINDADA: Lê APENAS o bloco entre os delimitadores ---
             const meta = {};
-            const linhas = textoPuro.split('\n');
-            linhas.forEach(linha => {
-                if (linha.includes(':')) {
-                    const [chave, ...valor] = linha.split(':');
-                    // Limpa a chave (remove tudo que não for letra/número)
-                    const chaveLimpa = chave.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    // Junta o valor (caso contenha dois pontos na URL ou texto)
-                    const valorLimpo = valor.join(':').trim();
-                    if (chaveLimpa && valorLimpo) {
-                        meta[chaveLimpa] = valorLimpo.replace(/---/g, ''); // Remove delimitadores residuais
+            const partes = textoPuro.split('---');
+            if (partes.length >= 3) {
+                const blocoMeta = partes[1]; // Apenas o conteúdo do cabeçalho
+                blocoMeta.split('\n').forEach(linha => {
+                    if (linha.includes(':')) {
+                        const [chave, ...valor] = linha.split(':');
+                        const chaveLimpa = chave.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const valorLimpo = valor.join(':').trim();
+                        if (chaveLimpa) meta[chaveLimpa] = valorLimpo;
                     }
-                }
-            });
+                });
+            }
             console.log("META LIMPO PARA USO:", meta);
 
-            // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda de forma consistente
+            // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda
             let storiesData = [];
             if (meta.image) {
                 const imgs = meta.image.split(",");
@@ -476,7 +475,6 @@
 
             storiesAtuais = storiesData;
 
-            // Força a renderização após o modal estar montado
             storyIndexAtivo = 0;
             setTimeout(() => {
                 renderizarStoryAtual();
@@ -499,7 +497,6 @@
                 coordenadasContainer.innerText = "📍 GPS: Indisponível";
             }
 
-            // ✍️ Alimenta o Artigo
             document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
 
             // Avisos de IA
