@@ -382,7 +382,17 @@
 }
 
     function parseFrontMatter(textoPuro) {
-        const partes = textoPuro.split("---");
+        // 1. Limpa espaços em branco ou quebras de linha antes do primeiro ---
+        const textoLimpo = textoPuro.trim();
+        
+        // 2. Verifica se o texto realmente começa com o delimitador
+        if (!textoLimpo.startsWith("---")) {
+            return { meta: {}, corpo: textoPuro };
+        }
+
+        const partes = textoLimpo.split("---");
+        // O split("---") em um texto que começa com "---" gera uma string vazia no índice 0.
+        // Portanto, o meta está no índice 1, e o corpo no índice 2.
         if (partes.length < 3) return { meta: {}, corpo: textoPuro };
         
         const blocoMeta = partes[1];
