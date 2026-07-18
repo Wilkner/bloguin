@@ -23,8 +23,8 @@ app.add_middleware(
 )
 
 # 🔒 SEGURANÇA MÁXIMA: As chaves fixas sumiram daqui!
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = "https://xyxamtfxbnztpqpgzqsp.supabase.co";
+SUPABASE_KEY = "sb_publishable__OBFaqNzfmxPDB-ViXIEPQ_8adCDoWy";
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("❌ ERRO CRÍTICO: Variáveis de ambiente SUPABASE_URL ou SUPABASE_KEY não configuradas!")

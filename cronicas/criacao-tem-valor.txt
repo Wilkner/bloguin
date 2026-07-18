@@ -7,7 +7,7 @@ ia_texto: False
 ia_video: True
 ia_stories: False
 image: assets/images/criacao-tem-valor.jpg
-video: assets/videos/criacao-tem-valor.mp4
+video: https://drive.google.com/file/d/1-pqxG7dp7jAmdoyFclfA6lE9lWUXfDt3/view
 legenda: Raffaellino Del Garbo sobre a Ressureição
 camera: samsung Galaxy S24 Ultra
 latitude: 43.7768

@@ -75,12 +75,15 @@
         /* Modal Multimodal */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
             background-color: rgba(15, 23, 42, 0.95);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000; /* 2000 é mais que suficiente para ficar acima de tudo sem quebrar o layout */
             padding: 20px;
         }
 
@@ -198,6 +201,12 @@
             border: 1px solid var(--border);
             line-height: 1.4;
         }
+
+        footer {
+            position: relative; /* Garante que ele fique no fluxo normal do documento */
+            z-index: 10;        /* Mantém o rodapé acima de elementos simples, mas abaixo do modal */
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -220,6 +229,21 @@
 
     <div id="loadingStatus">Carregando diários de bordo...</div>
     <div class="portal-grid" id="vitrineGrid"></div>
+
+        <!-- 🌍 RODAPÉ DESIGN PREMIUM — BLOGUIN -->
+        <footer style="margin-top: 80px; padding: 40px 20px; border-top: 1px solid var(--border); background-color: #090d16; text-align: center;">
+            <div style="max-width: 1100px; margin: 0 auto;">
+                <h4 style="font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0 0 10px 0; letter-spacing: 0.5px;">
+                    © 2026 Bloguin. Todos os direitos reservados — Proibida reprodução sem autorização prévia.
+                </h4>
+                <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin: 0;">
+                    📬 Dúvidas? Me mande um e-mail: 
+                    <a href="mailto:wilkner@gmail.com" style="color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); transition: color 0.2s; padding-bottom: 2px;">
+                        wilkner@gmail.com
+                    </a>
+                </h4>
+            </div>
+        </footer>
 
     <!-- MODAL MULTIMODAL UNIFICADO -->
     <div class="modal-overlay" id="multimodalModal">
@@ -277,12 +301,15 @@
                 <!-- MODO VÍDEO -->
                 <div id="modo-video" class="painel-modo">
                     <div class="video-layout">
-                        <video id="playerVideo" controls src=""></video>
-                        <!-- Container para o aviso de IA do Vídeo -->
+                        <!-- Mantemos a tag video original para não quebrar seu JS -->
+                        <video id="playerVideo" controls src="" style="width: 100%;"></video>
+                        
+                        <!-- Adicionamos este container extra para o Iframe (YouTube/Drive) -->
+                        <div id="iframeContainer" style="display:none; width: 100%; height: 315px;"></div>
+                        
                         <div id="videoIAContainer"></div>
                     </div>
                 </div>
-            </div>
 
             <!-- REAÇÕES -->
             <div class="bloco-reacoes">
@@ -292,20 +319,7 @@
             </div>
         </div>    
     </div>
-<!-- 🌍 RODAPÉ DESIGN PREMIUM — BLOGUIN -->
-    <footer style="margin-top: 80px; padding: 40px 20px; border-top: 1px solid var(--border); background-color: #090d16; text-align: center;">
-        <div style="max-width: 1100px; margin: 0 auto;">
-            <h4 style="font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0 0 10px 0; letter-spacing: 0.5px;">
-                © 2026 Bloguin. Todos os direitos reservados — Proibida reprodução sem autorização prévia.
-            </h4>
-            <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin: 0;">
-                📬 Dúvidas? Me mande um e-mail: 
-                <a href="mailto:wilkner@gmail.com" style="color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); transition: color 0.2s; padding-bottom: 2px;">
-                    wilkner@gmail.com
-                </a>
-            </h4>
-        </div>
-    </footer>
+
 <script>
     const SUPABASE_URL = "https://xyxamtfxbnztpqpgzqsp.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable__OBFaqNzfmxPDB-ViXIEPQ_8adCDoWy";
@@ -418,81 +432,145 @@
     
 
     async function abrirModal(id, titulo, destino, arquivoPath) {
-    cronicaAtivaId = id;
-    document.getElementById("modalTitulo").innerText = titulo;
-    document.getElementById("modalMetaSub").innerText = destino;
-
-    // Limpeza de containers
-    ["artigoIAContainer", "videoIAContainer", "storiesIAContainer"].forEach(id => 
-        document.getElementById(id).innerHTML = ""
-    );
-
-    try {
-        atualizarContadoresLocais();
-        const response = await fetch(normalizarCaminho(arquivoPath));
-        if (!response.ok) throw new Error("Erro ao carregar arquivo");
-
-        const textoPuro = await response.text();
-        const payload = parseFrontMatter(textoPuro);
+        cronicaAtivaId = id;
         
-        // Extração Blindada: Busca chaves em todo o texto (fallback definitivo)
-        const meta = {};
-        const chaves = ['camera', 'latitude', 'longitude', 'image', 'legenda', 'video', 'iatexto', 'titulo'];
-        chaves.forEach(chave => {
-            const regex = new RegExp(`${chave}\\s*:\\s*(.*)`, 'i');
-            const match = textoPuro.match(regex);
-            if (match) meta[chave] = match[1].replace(/[\r\n---]/g, '').trim();
-        });
+        document.getElementById("modalTitulo").innerText = titulo; 
+        document.getElementById("modalMetaSub").innerText = destino;
 
-        // Configuração de Stories (Híbrida: Meta ou Markdown)
-        if (meta.image) {
-            const imgs = meta.image.split(",");
-            const legs = (meta.legenda || "").split(",");
-            storiesAtuais = imgs.map((img, i) => ({
-                image: img.trim(),
-                legenda: (legs[i] || meta.titulo || "Foto do relato").trim()
-            }));
+        document.getElementById("artigoIAContainer").innerHTML = "";
+        document.getElementById("videoIAContainer").innerHTML = "";
+        document.getElementById("storiesIAContainer").innerHTML = "";
+
+        try {
+            atualizarContadoresLocais();
+
+            const caminhoCorreto = normalizarCaminho(arquivoPath);
+            const response = await fetch(caminhoCorreto);
+            if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
+            
+            const textoPuro = await response.text();
+            const payload = parseFrontMatter(textoPuro);
+            
+            // 🔥 CORREÇÃO BLINDADA: Limpa chaves do objeto meta para garantir compatibilidade GitHub/Windows
+            const meta = {};
+            if (payload.meta) {
+                Object.keys(payload.meta).forEach(key => {
+                    // Remove qualquer caractere que não seja letra ou número
+                    const cleanKey = key.replace(/[^a-zA-Z0-9]/g, ''); 
+                    meta[cleanKey] = payload.meta[key];
+                });
+            }
+            console.log("META LIMPO PARA USO:", meta);
+
+            // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda de forma consistente
+            let storiesData = [];
+            if (meta.image) {
+                const imgs = meta.image.split(",");
+                const legs = meta.legenda ? meta.legenda.split(",") : [];
+                storiesData = imgs.map((img, i) => ({
+                    image: img.trim(),
+                    legenda: legs[i] ? legs[i].trim() : (meta.titulo || "Foto do relato")
+                }));
+            } else {
+                const regexImg = /!\[(.*?)\]\((.*?)\)/g;
+                let match;
+                while ((match = regexImg.exec(payload.corpo)) !== null) {
+                    storiesData.push({
+                        image: match[2].trim(),
+                        legenda: match[1].trim() || "Foto do relato"
+                    });
+                }
+            }
+
+            storiesAtuais = storiesData;
+
+            // Força a renderização após o modal estar montado
+            storyIndexAtivo = 0;
+            setTimeout(() => {
+                renderizarStoryAtual();
+            }, 100);
+
+            // 📸 METADADOS EXIF SANITIZADOS
+            document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
+            
+            const lat = meta.latitude;
+            const lon = meta.longitude;
+            const coordenadasContainer = document.getElementById("metaCoordenadas");
+
+            if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
+                coordenadasContainer.innerHTML = `
+                    <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
+                        📍 Ver localização no Google Maps
+                    </a>
+                `;
+            } else {
+                coordenadasContainer.innerText = "📍 GPS: Indisponível";
+            }
+
+            // ✍️ Alimenta o Artigo
+            document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
+
+            // Avisos de IA
+            if (meta.iatexto === "True" || meta.iatexto === "true") {
+                document.getElementById("artigoIAContainer").innerHTML = `<div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">🤖 <strong>Content Credentials:</strong> Esta narrativa foi co-criada com auxílio de IA.</div>`;
+            }
+        
+        // 🎥 Alimenta o Vídeo
+        const playerVideo = document.getElementById("playerVideo");
+        const videoContainer = document.querySelector(".video-layout");
+        const btnVideo = document.getElementById("tab-video");
+        const videoIAContainer = document.getElementById("videoIAContainer"); // Container que tínhamos antes
+
+        if (meta.video) {
+            btnVideo.disabled = false;
+            btnVideo.style.opacity = "1";
+
+            // 1. Lógica do aviso de IA (Restaurada!)
+            if (meta.iavideo === "True" || meta.iavideo === "true") {
+                videoIAContainer.innerHTML = `<div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">🤖 <strong>Uso de IA:</strong> Este vídeo foi co-criado com auxílio de IA.</div>`;
+            }
+
+            // 2. Lógica do Player (Preservando os elementos)
+            if (meta.video.includes("drive.google.com") || meta.video.includes("youtube.com") || meta.video.includes("youtu.be")) {
+                playerVideo.style.display = "none";
+                
+                const oldIframe = videoContainer.querySelector("iframe");
+                if (oldIframe) oldIframe.remove();
+
+                let embedUrl = meta.video;
+                if (meta.video.includes("drive.google.com")) {
+                    embedUrl = meta.video.replace("/view?usp=sharing", "/preview").replace("/view", "/preview");
+                } else {
+                    const videoId = meta.video.split(/v=|be\//)[1].split(/[&?]/)[0];
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                }
+                
+                const iframe = document.createElement("iframe");
+                iframe.src = embedUrl;
+                iframe.width = "100%";
+                iframe.height = "315";
+                iframe.frameBorder = "0";
+                iframe.allowFullscreen = true;
+                videoContainer.appendChild(iframe);
+            } else {
+                playerVideo.style.display = "block";
+                const oldIframe = videoContainer.querySelector("iframe");
+                if (oldIframe) oldIframe.remove();
+                playerVideo.src = normalizarCaminho(meta.video);
+            }
         } else {
-            const matches = [...payload.corpo.matchAll(/!\[(.*?)\]\((.*?)\)/g)];
-            storiesAtuais = matches.map(m => ({ image: m[2], legenda: m[1] || "Foto do relato" }));
+            btnVideo.disabled = true;
+            btnVideo.style.opacity = "0.3";
         }
 
-        // Renderização da Interface
-        renderizarUI(meta, payload.corpo);
-        
-        mudarModo('stories');
-        document.getElementById("multimodalModal").style.display = "flex";
-        setTimeout(renderizarStoryAtual, 100);
+            mudarModo('stories');
+            document.getElementById("multimodalModal").style.display = "flex";
 
-    } catch (err) {
-        console.error("Erro:", err);
-        alert("Erro ao abrir relato: " + err.message);
+        } catch (err) {
+            console.error("Erro ao abrir relato:", err);
+            alert("Erro ao abrir relato: " + err.message);
+        }
     }
-}
-
-// Helper para organizar a renderização de metadados
-function renderizarUI(meta, corpo) {
-    document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
-    
-    const coord = document.getElementById("metaCoordenadas");
-    if (meta.latitude && meta.longitude) {
-        coord.innerHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${meta.latitude},${meta.longitude}" target="_blank">📍 Ver localização</a>`;
-    } else {
-        coord.innerText = "📍 GPS: Indisponível";
-    }
-
-    document.getElementById("artigoCorpo").innerHTML = marked.parse(corpo);
-    
-    if (meta.iatexto === "True") {
-        document.getElementById("artigoIAContainer").innerHTML = `<div class="ia-disclosure">🤖 Content Credentials: Narrativa assistida por IA.</div>`;
-    }
-
-    const btnVideo = document.getElementById("tab-video");
-    const player = document.getElementById("playerVideo");
-    btnVideo.disabled = !meta.video;
-    btnVideo.style.opacity = meta.video ? "1" : "0.3";
-    if (meta.video) player.src = normalizarCaminho(meta.video);
-}
 
     // 2. Stories Corrigido
 function renderizarStoryAtual() {
@@ -584,6 +662,28 @@ function renderizarStoryAtual() {
         document.getElementById("playerVideo").pause();
         cronicaAtivaId = null;
     }
+
+    function fecharModal() {
+        // 1. Esconde o modal
+        document.getElementById("multimodalModal").style.display = "none";
+        
+        // 2. Pausa o vídeo local (MP4) se existir
+        const playerVideo = document.getElementById("playerVideo");
+        if (playerVideo) {
+            playerVideo.pause();
+            playerVideo.currentTime = 0; // Opcional: reseta o vídeo para o início
+        }
+
+        // 3. Remove o Iframe se for YouTube/Drive (Isso para o vídeo imediatamente)
+        const videoContainer = document.querySelector(".video-layout");
+        const iframe = videoContainer.querySelector("iframe");
+        if (iframe) {
+            iframe.remove(); // Ao remover o iframe, o vídeo para de tocar na hora
+        }
+
+        cronicaAtivaId = null;
+    }
+        
 </script>
 </body>
 </html>

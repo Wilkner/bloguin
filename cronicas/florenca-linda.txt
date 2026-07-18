@@ -7,7 +7,7 @@ ia_texto: False
 ia_video: True
 ia_stories: False
 image: assets/images/florenca-linda.jpg
-video: assets/videos/florenca-linda.mp4
+video: https://drive.google.com/file/d/1fUV5WtwPwuwoxPm3YhnrCsmHX6M8DK3d/view
 legenda: Vista da praça Michelangelo
 camera: samsung Galaxy S24 Ultra
 latitude: 43.7631

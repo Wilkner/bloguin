@@ -2,7 +2,7 @@
 date: 2026-06-14
 destination: Itália - Florença
 image: assets/images/david_michelangelo.jpg
-video: assets/videos/david-michelangelo.mp4
+video: https://drive.google.com/file/d/1N-I1sNK8mNMACrRzyKm228r0hThY0A8v/view?usp=drive_open
 camera: Galaxy S24 Ultra
 latitude: 43.776718
 longitude: 11.259329
