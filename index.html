@@ -417,7 +417,7 @@
 
     
 
- async function abrirModal(id, titulo, destino, arquivoPath) {
+async function abrirModal(id, titulo, destino, arquivoPath) {
     cronicaAtivaId = id;
     
     document.getElementById("modalTitulo").innerText = titulo; 
@@ -436,12 +436,18 @@
         
         const textoPuro = await response.text();
         const payload = parseFrontMatter(textoPuro);
-        const meta = payload.meta || {};
+        
+        // 🔥 CORREÇÃO DE PLATAFORMA: Limpa chaves do objeto meta (remove \r, \n, espaços extras)
+        const meta = {};
+        if (payload.meta) {
+            Object.keys(payload.meta).forEach(key => {
+                const cleanKey = key.replace(/[\r\n\s]/g, ''); 
+                meta[cleanKey] = payload.meta[key];
+            });
+        }
 
-        // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda de forma consistente
+        // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda
         let storiesData = [];
-
-        // 1. Tenta extrair do Meta (YAML)
         if (meta.image) {
             const imgs = meta.image.split(",");
             const legs = meta.legenda ? meta.legenda.split(",") : [];
@@ -449,28 +455,25 @@
                 image: img.trim(),
                 legenda: legs[i] ? legs[i].trim() : (meta.titulo || "Foto do relato")
             }));
-        } 
-        // 2. Fallback: Extrai do Markdown (Regex captura legenda entre [] e caminho entre ())
-        else {
+        } else {
             const regexImg = /!\[(.*?)\]\((.*?)\)/g;
             let match;
             while ((match = regexImg.exec(payload.corpo)) !== null) {
                 storiesData.push({
-                    image: match[2].trim(), // Caminho
-                    legenda: match[1].trim() || "Foto do relato" // Legenda
+                    image: match[2].trim(),
+                    legenda: match[1].trim() || "Foto do relato"
                 });
             }
         }
 
         storiesAtuais = storiesData;
 
-        // Força a renderização após o modal estar montado
         storyIndexAtivo = 0;
         setTimeout(() => {
             renderizarStoryAtual();
         }, 100);
 
-        // 📸 METADADOS E CONTEÚDO (Mantido conforme sua lógica)
+        // 📸 METADADOS SANITIZADOS
         document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
         
         const lat = meta.latitude;
@@ -489,7 +492,7 @@
 
         document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
 
-        // Avisos de IA
+        // Avisos de IA (usando meta sanitizado)
         if (meta.ia_texto === "True" || meta.ia_texto === "true") {
             document.getElementById("artigoIAContainer").innerHTML = `<div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">🤖 <strong>Content Credentials:</strong> Esta narrativa foi co-criada com auxílio de IA.</div>`;
         }
