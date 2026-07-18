@@ -493,33 +493,41 @@ async function carregarVitrine() {
     }
 
     function renderizarStoryAtual() {
-    // 1. Verificação de segurança: se não houver stories, para aqui.
-    if (storiesAtuais.length === 0) return;
-    
-    // 2. Garante que buscamos o elemento dentro da função, no momento do clique.
-    const imgElement = document.getElementById("storyImg");
-    const legendaElement = document.getElementById("storyLegenda");
-    const contadorElement = document.getElementById("storiesContador");
+            // 1. Verificação de segurança: se não houver stories, para aqui.
+            if (storiesAtuais.length === 0) return;
+            
+            const imgElement = document.getElementById("storyImg");
+            const legendaElement = document.getElementById("storyLegenda");
+            const contadorElement = document.getElementById("storiesContador");
 
-    if (!imgElement) {
-        console.error("Elemento 'storyImg' não encontrado no DOM!");
-        return;
-    }
+            if (!imgElement) {
+                console.error("Elemento 'storyImg' não encontrado no DOM!");
+                return;
+            }
 
-    const story = storiesAtuais[storyIndexAtivo];
-    
-    // 3. Montagem do caminho (aplicando a lógica de raiz que discutimos)
-    let caminhoImagem = story.image;
-    if (!caminhoImagem.startsWith('http')) {
-        // Remove ./ ou / inicial e limpa o caminho para ficar relativo à pasta do projeto
-        caminhoImagem = caminhoImagem.replace(/^\.\//, '').replace(/^\//, '');
-    }
-    
-    // 4. Aplicação segura
-    imgElement.src = caminhoImagem;
-    legendaElement.innerText = story.legenda;
-    contadorElement.innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
-    }
+            const story = storiesAtuais[storyIndexAtivo];
+            
+            // 2. Montagem inteligente do caminho (Detector de Ambiente)
+            // Detecta se estamos no GitHub Pages para aplicar o /bloguin
+            const isGitHubPages = window.location.hostname.includes("github.io");
+            const BASE_PATH = isGitHubPages ? "/bloguin" : ""; 
+            
+            let caminhoImagem = story.image;
+            
+            // Se não for um link externo (http), tratamos como arquivo local
+            if (!caminhoImagem.startsWith('http')) {
+                // Remove ./ ou / inicial e limpa o caminho para ficar relativo à pasta do projeto
+                let pathLimpo = caminhoImagem.replace(/^\.\//, '').replace(/^\//, '');
+                
+                // Monta o caminho: se for GitHub, insere o /bloguin, se for local, apenas o path
+                caminhoImagem = isGitHubPages ? `${BASE_PATH}/${pathLimpo}` : pathLimpo;
+            }    
+            
+            // 3. Aplicação segura
+            imgElement.src = caminhoImagem;
+            legendaElement.innerText = story.legenda;
+            contadorElement.innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+        }
 
     function navegarStories(direcao) {
         storyIndexAtivo += direcao;
