@@ -382,6 +382,8 @@
 }
 
     function parseFrontMatter(textoPuro) {
+        console.log("DEBUG - Conteúdo bruto recebido:", textoPuro.substring(0, 50)); // Mostra os primeiros 50 caracteres
+        
         // 1. Limpa espaços em branco ou quebras de linha antes do primeiro ---
         const textoLimpo = textoPuro.trim();
         
@@ -496,7 +498,7 @@ async function abrirModal(id, titulo, destino, arquivoPath) {
         if (payload.meta.video) {
             btnVideo.disabled = false;
             btnVideo.style.opacity = "1";
-            player.src = payload.meta.video;
+            player.src = normalizarCaminho(payload.meta.video);
         } else {
             btnVideo.disabled = true;
             btnVideo.style.opacity = "0.3";
