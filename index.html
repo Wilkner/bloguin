@@ -501,18 +501,37 @@
     }
 
     // 2. Stories Corrigido
-    function renderizarStoryAtual() {
-        if (storiesAtuais.length === 0) return;
-        
-        const imgElement = document.getElementById("storyImg");
-        const story = storiesAtuais[storyIndexAtivo];
-        
-        // 🔥 Usa a mesma normalização para garantir consistência
-        imgElement.src = normalizarCaminho(story.image);
-        
-        document.getElementById("storyLegenda").innerText = story.legenda;
-        document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+function renderizarStoryAtual() {
+    console.log("Debug Stories - storiesAtuais:", storiesAtuais);
+    console.log("Debug Stories - Index Ativo:", storyIndexAtivo);
+
+    if (storiesAtuais.length === 0) return;
+    
+    const imgElement = document.getElementById("storyImg");
+    const story = storiesAtuais[storyIndexAtivo];
+    
+    console.log("Debug Stories - Story Objeto:", story);
+
+    if (!imgElement) {
+        console.error("Elemento 'storyImg' não encontrado!");
+        return;
     }
+
+    if (!story || !story.image) {
+        console.error("ERRO: O objeto story ou a propriedade 'image' está faltando!", story);
+        return;
+    }
+    
+    // Normalização com log de saída
+    const urlFinal = normalizarCaminho(story.image);
+    console.log("URL final sendo aplicada ao src:", urlFinal);
+    
+    imgElement.src = urlFinal;
+    
+    // Atualiza legenda e contador
+    document.getElementById("storyLegenda").innerText = story.legenda || "";
+    document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+}
 
     function navegarStories(direcao) {
         storyIndexAtivo += direcao;
