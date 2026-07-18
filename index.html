@@ -417,117 +417,104 @@
 
     
 
-    async function abrirModal(id, titulo, destino, arquivoPath) {
-        cronicaAtivaId = id;
+ async function abrirModal(id, titulo, destino, arquivoPath) {
+    cronicaAtivaId = id;
+    
+    document.getElementById("modalTitulo").innerText = titulo; 
+    document.getElementById("modalMetaSub").innerText = destino;
+
+    document.getElementById("artigoIAContainer").innerHTML = "";
+    document.getElementById("videoIAContainer").innerHTML = "";
+    document.getElementById("storiesIAContainer").innerHTML = "";
+
+    try {
+        atualizarContadoresLocais();
+
+        const caminhoCorreto = normalizarCaminho(arquivoPath);
+        const response = await fetch(caminhoCorreto);
+        if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
         
-        document.getElementById("modalTitulo").innerText = titulo; 
-        document.getElementById("modalMetaSub").innerText = destino;
+        const textoPuro = await response.text();
+        const payload = parseFrontMatter(textoPuro);
+        const meta = payload.meta || {};
 
-        document.getElementById("artigoIAContainer").innerHTML = "";
-        document.getElementById("videoIAContainer").innerHTML = "";
-        document.getElementById("storiesIAContainer").innerHTML = "";
+        // 🔥 CORREÇÃO HÍBRIDA: Captura imagem E legenda de forma consistente
+        let storiesData = [];
 
-        try {
-            atualizarContadoresLocais();
-
-            const caminhoCorreto = normalizarCaminho(arquivoPath);
-            const response = await fetch(caminhoCorreto);
-            if (!response.ok) throw new Error("Não encontrou o arquivo físico da crônica: " + caminhoCorreto);
-            
-            const textoPuro = await response.text();
-            const payload = parseFrontMatter(textoPuro);
-            
-            // Garante que payload.meta exista para evitar erro em arquivos sem YAML
-            const meta = payload.meta || {};
-
-            // 🔥 CORREÇÃO: Fallback inteligente
-            // 1. Tenta pegar do meta. 2. Se falhar, busca imagens dentro do corpo do texto (Markdown)
-            let arrayImagens = meta.image ? meta.image.split(",") : [];
-            if (arrayImagens.length === 0) {
-                const regexImg = /!\[.*?\]\((.*?)\)/g;
-                let match;
-                while ((match = regexImg.exec(payload.corpo)) !== null) {
-                    arrayImagens.push(match[1]);
-                }
-            }
-
-            const arrayLegendas = meta.legenda ? meta.legenda.split(",") : [];
-
-            storiesAtuais = arrayImagens.map((img, index) => ({
+        // 1. Tenta extrair do Meta (YAML)
+        if (meta.image) {
+            const imgs = meta.image.split(",");
+            const legs = meta.legenda ? meta.legenda.split(",") : [];
+            storiesData = imgs.map((img, i) => ({
                 image: img.trim(),
-                legenda: arrayLegendas[index] ? arrayLegendas[index].trim() : "Foto do relato"
+                legenda: legs[i] ? legs[i].trim() : (meta.titulo || "Foto do relato")
             }));
-
-            // 🔥 FORÇA A RENDERIZAÇÃO APÓS BREVE PAUSA PARA GARANTIR QUE O MODAL ESTEJA NO DOM
-            storyIndexAtivo = 0;
-            setTimeout(() => {
-                renderizarStoryAtual();
-            }, 50);
-
-            // 📸 METADADOS EXIF
-            document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
-            
-            const lat = meta.latitude;
-            const lon = meta.longitude;
-            const coordenadasContainer = document.getElementById("metaCoordenadas");
-
-            if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
-                coordenadasContainer.innerHTML = `
-                    <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
-                        📍 Ver localização no Google Maps
-                    </a>
-                `;
-            } else {
-                coordenadasContainer.innerText = "📍 GPS: Indisponível";
+        } 
+        // 2. Fallback: Extrai do Markdown (Regex captura legenda entre [] e caminho entre ())
+        else {
+            const regexImg = /!\[(.*?)\]\((.*?)\)/g;
+            let match;
+            while ((match = regexImg.exec(payload.corpo)) !== null) {
+                storiesData.push({
+                    image: match[2].trim(), // Caminho
+                    legenda: match[1].trim() || "Foto do relato" // Legenda
+                });
             }
-
-            // ✍️ Alimenta o Artigo
-            document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
-
-            // Avisos de IA
-            if (meta.ia_texto === "True" || meta.ia_texto === "true") {
-                document.getElementById("artigoIAContainer").innerHTML = `
-                    <div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">
-                        🤖 <strong>Content Credentials:</strong> Esta narrativa foi co-criada com auxílio de IA.
-                    </div>`;
-            }
-
-            // 🎥 Alimenta o Vídeo
-            const btnVideo = document.getElementById("tab-video");
-            const player = document.getElementById("playerVideo");
-            
-            if (meta.ia_video === "True" || meta.ia_video === "true") {
-                document.getElementById("videoIAContainer").innerHTML = `
-                    <div class="ia-disclosure" style="border-left: 3px solid #e11d48;">
-                        🎬 <strong>Nota:</strong> Este vídeo contém elementos de IA.
-                    </div>`;
-            }
-
-            if (meta.video) {
-                btnVideo.disabled = false;
-                btnVideo.style.opacity = "1";
-                player.src = normalizarCaminho(meta.video);
-            } else {
-                btnVideo.disabled = true;
-                btnVideo.style.opacity = "0.3";
-                player.src = "";
-            }
-
-            if (meta.ia_stories === "True" || meta.ia_stories === "true") {
-                document.getElementById("storiesIAContainer").innerHTML = `
-                    <div class="ia-disclosure" style="text-align: center; border-left: 3px solid #10b981;">
-                        ✨ Mídias do Stories editadas com assistência de IA.
-                    </div>`;
-            }
-
-            mudarModo('stories');
-            document.getElementById("multimodalModal").style.display = "flex";
-
-        } catch (err) {
-            console.error("Erro ao abrir relato:", err);
-            alert("Erro ao abrir relato: " + err.message);
         }
+
+        storiesAtuais = storiesData;
+
+        // Força a renderização após o modal estar montado
+        storyIndexAtivo = 0;
+        setTimeout(() => {
+            renderizarStoryAtual();
+        }, 100);
+
+        // 📸 METADADOS E CONTEÚDO (Mantido conforme sua lógica)
+        document.getElementById("metaCamera").innerText = `📸 Câmera: ${meta.camera || "Desconhecida"}`;
+        
+        const lat = meta.latitude;
+        const lon = meta.longitude;
+        const coordenadasContainer = document.getElementById("metaCoordenadas");
+
+        if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
+            coordenadasContainer.innerHTML = `
+                <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
+                    📍 Ver localização no Google Maps
+                </a>
+            `;
+        } else {
+            coordenadasContainer.innerText = "📍 GPS: Indisponível";
+        }
+
+        document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
+
+        // Avisos de IA
+        if (meta.ia_texto === "True" || meta.ia_texto === "true") {
+            document.getElementById("artigoIAContainer").innerHTML = `<div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">🤖 <strong>Content Credentials:</strong> Esta narrativa foi co-criada com auxílio de IA.</div>`;
+        }
+
+        const btnVideo = document.getElementById("tab-video");
+        const player = document.getElementById("playerVideo");
+        
+        if (meta.video) {
+            btnVideo.disabled = false;
+            btnVideo.style.opacity = "1";
+            player.src = normalizarCaminho(meta.video);
+        } else {
+            btnVideo.disabled = true;
+            btnVideo.style.opacity = "0.3";
+            player.src = "";
+        }
+
+        mudarModo('stories');
+        document.getElementById("multimodalModal").style.display = "flex";
+
+    } catch (err) {
+        console.error("Erro ao abrir relato:", err);
+        alert("Erro ao abrir relato: " + err.message);
     }
+}
 
     // 2. Stories Corrigido
 function renderizarStoryAtual() {
