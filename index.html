@@ -403,102 +403,106 @@
         return { meta, corpo };
     }
 
-    async function abrirModal(id, titulo, destino, arquivoPath) {
-        cronicaAtivaId = id;
+async function abrirModal(id, titulo, destino, arquivoPath) {
+    cronicaAtivaId = id;
+    
+    document.getElementById("modalTitulo").innerText = titulo; 
+    document.getElementById("modalMetaSub").innerText = destino;
+
+    // Limpa avisos de IA antigos antes de renderizar os novos
+    document.getElementById("artigoIAContainer").innerHTML = "";
+    document.getElementById("videoIAContainer").innerHTML = "";
+    document.getElementById("storiesIAContainer").innerHTML = "";
+
+    try {
+        atualizarContadoresLocais();
+
+        // 🔥 CORREÇÃO: Normalize o caminho antes de buscar o arquivo
+        const caminhoCorreto = normalizarCaminho(arquivoPath);
+        console.log("Buscando arquivo em:", caminhoCorreto);
         
-        document.getElementById("modalTitulo").innerText = titulo; 
-        document.getElementById("modalMetaSub").innerText = destino;
+        const response = await fetch(caminhoCorreto);
+        if (!response.ok) throw new Error("Não encontrou o arquivo físico da crônica: " + caminhoCorreto);
+        
+        const textoPuro = await response.text();
+        const payload = parseFrontMatter(textoPuro);
 
-        // Limpa avisos de IA antigos antes de renderizar os novos
-        document.getElementById("artigoIAContainer").innerHTML = "";
-        document.getElementById("videoIAContainer").innerHTML = "";
-        document.getElementById("storiesIAContainer").innerHTML = "";
+        // Alimenta os Stories
+        const arrayImagens = payload.meta.image ? payload.meta.image.split(",") : [];
+        const arrayLegendas = payload.meta.legenda ? payload.meta.legenda.split(",") : [];
 
-        try {
-            atualizarContadoresLocais();
+        storiesAtuais = arrayImagens.map((img, index) => ({
+            image: img.trim(),
+            legenda: arrayLegendas[index] ? arrayLegendas[index].trim() : (arrayLegendas[0] || "Sem legenda.")
+        }));
 
-            const response = await fetch(arquivoPath);
-            if (!response.ok) throw new Error("Não encontrou o arquivo físico da crônica.");
-            
-            const textoPuro = await response.text();
-            const payload = parseFrontMatter(textoPuro);
+        storyIndexAtivo = 0;
+        renderizarStoryAtual();
 
-            // Alimenta os Stories
-            const arrayImagens = payload.meta.image ? payload.meta.image.split(",") : [];
-            const arrayLegendas = payload.meta.legenda ? payload.meta.legenda.split(",") : [];
+        // 📸 METADADOS EXIF
+        document.getElementById("metaCamera").innerText = `📸 Câmera: ${payload.meta.camera || "Desconhecida"}`;
+        
+        const lat = payload.meta.latitude;
+        const lon = payload.meta.longitude;
+        const coordenadasContainer = document.getElementById("metaCoordenadas");
 
-            storiesAtuais = arrayImagens.map((img, index) => ({
-                image: img.trim(),
-                legenda: arrayLegendas[index] ? arrayLegendas[index].trim() : (arrayLegendas[0] || "Sem legenda.")
-            }));
-
-            storyIndexAtivo = 0;
-            renderizarStoryAtual();
-
-            // 📸 METADADOS EXIF ENVIADOS PARA O CARROSSEL (Gera o link dinâmico do Maps)
-            document.getElementById("metaCamera").innerText = `📸 Câmera: ${payload.meta.camera || "Desconhecida"}`;
-            
-            const lat = payload.meta.latitude;
-            const lon = payload.meta.longitude;
-            const coordenadasContainer = document.getElementById("metaCoordenadas");
-
-            if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
-                coordenadasContainer.innerHTML = `
-                    <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
-                        📍 Ver localização no Google Maps
-                    </a>
-                `;
-            } else {
-                coordenadasContainer.innerText = "📍 GPS: Indisponível";
-            }
-
-            // ✍️ Alimenta o Artigo (Focado puramente no texto literário agora)
-            document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
-
-            // Aviso de IA no Artigo
-            if (payload.meta.ia_texto === "True" || payload.meta.ia_texto === "true") {
-                document.getElementById("artigoIAContainer").innerHTML = `
-                    <div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">
-                        🤖 <strong>Content Credentials:</strong> Esta narrativa literária foi co-criada ou revisada com auxílio de Inteligência Artificial.
-                    </div>`;
-            }
-
-            // 🎥 Alimenta o Vídeo
-            const btnVideo = document.getElementById("tab-video");
-            const player = document.getElementById("playerVideo");
-            
-            if (payload.meta.ia_video === "True" || payload.meta.ia_video === "true") {
-                document.getElementById("videoIAContainer").innerHTML = `
-                    <div class="ia-disclosure" style="border-left: 3px solid #e11d48;">
-                        🎬 <strong>Nota de Transparência:</strong> Este elemento de vídeo contém modificações ou geração por Inteligência Artificial.
-                    </div>`;
-            }
-
-            if (payload.meta.video) {
-                btnVideo.disabled = false;
-                btnVideo.style.opacity = "1";
-                player.src = payload.meta.video;
-            } else {
-                btnVideo.disabled = true;
-                btnVideo.style.opacity = "0.3";
-                player.src = "";
-            }
-
-            // Aviso nos Stories
-            if (payload.meta.ia_stories === "True" || payload.meta.ia_stories === "true") {
-                document.getElementById("storiesIAContainer").innerHTML = `
-                    <div class="ia-disclosure" style="text-align: center; border-left: 3px solid #10b981;">
-                        ✨ Mídias do Stories editadas com assistência ou filtros de IA.
-                    </div>`;
-            }
-
-            mudarModo('stories');
-            document.getElementById("multimodalModal").style.display = "flex";
-
-        } catch (err) {
-            alert("Erro ao abrir relato: " + err.message);
+        if (lat && lon && lat !== "Indisponível" && lon !== "Indisponível") {
+            coordenadasContainer.innerHTML = `
+                <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">
+                    📍 Ver localização no Google Maps
+                </a>
+            `;
+        } else {
+            coordenadasContainer.innerText = "📍 GPS: Indisponível";
         }
+
+        // ✍️ Alimenta o Artigo
+        document.getElementById("artigoCorpo").innerHTML = marked.parse(payload.corpo);
+
+        // Aviso de IA no Artigo
+        if (payload.meta.ia_texto === "True" || payload.meta.ia_texto === "true") {
+            document.getElementById("artigoIAContainer").innerHTML = `
+                <div class="ia-disclosure" style="border-left: 3px solid #3b82f6;">
+                    🤖 <strong>Content Credentials:</strong> Esta narrativa literária foi co-criada ou revisada com auxílio de Inteligência Artificial.
+                </div>`;
+        }
+
+        // 🎥 Alimenta o Vídeo
+        const btnVideo = document.getElementById("tab-video");
+        const player = document.getElementById("playerVideo");
+        
+        if (payload.meta.ia_video === "True" || payload.meta.ia_video === "true") {
+            document.getElementById("videoIAContainer").innerHTML = `
+                <div class="ia-disclosure" style="border-left: 3px solid #e11d48;">
+                    🎬 <strong>Nota de Transparência:</strong> Este elemento de vídeo contém modificações ou geração por Inteligência Artificial.
+                </div>`;
+        }
+
+        if (payload.meta.video) {
+            btnVideo.disabled = false;
+            btnVideo.style.opacity = "1";
+            player.src = payload.meta.video;
+        } else {
+            btnVideo.disabled = true;
+            btnVideo.style.opacity = "0.3";
+            player.src = "";
+        }
+
+        // Aviso nos Stories
+        if (payload.meta.ia_stories === "True" || payload.meta.ia_stories === "true") {
+            document.getElementById("storiesIAContainer").innerHTML = `
+                <div class="ia-disclosure" style="text-align: center; border-left: 3px solid #10b981;">
+                    ✨ Mídias do Stories editadas com assistência ou filtros de IA.
+                </div>`;
+        }
+
+        mudarModo('stories');
+        document.getElementById("multimodalModal").style.display = "flex";
+
+    } catch (err) {
+        alert("Erro ao abrir relato: " + err.message);
     }
+}
 
     // 2. Stories Corrigido
 function renderizarStoryAtual() {
