@@ -309,7 +309,7 @@
 <script>
     const SUPABASE_URL = "https://xyxamtfxbnztpqpgzqsp.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable__OBFaqNzfmxPDB-ViXIEPQ_8adCDoWy";
-    
+    const BASE_PATH = "/bloguin";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     let cronicaAtivaId = null;
@@ -346,7 +346,9 @@ async function carregarVitrine() {
             }
 
             cronicas.forEach(cronica => {
-                let dataFormatada = '';
+                const urlImagem = cronica.capa_url.startsWith('http') 
+                  ? cronica.capa_url 
+                  : `${BASE_PATH}/${cronica.capa_url.replace(/^\.\//, '').replace(/^\//, '')}`;
                 
                 // 🔥 CORREÇÃO 2: Tratamento cirúrgico de data isolando o fuso horário
                 if (cronica.data_viagem) {
@@ -494,9 +496,17 @@ async function carregarVitrine() {
         if (storiesAtuais.length === 0) return;
         
         const story = storiesAtuais[storyIndexAtivo];
-        document.getElementById("storyImg").src = story.image;
-        document.getElementById("storyLegenda").innerText = story.legenda;
-        document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
+        // 🔥 Garantimos que o caminho seja absoluto a partir da raiz do site
+        let caminhoImagem = story.image;
+        if (!caminhoImagem.startsWith('http')) {
+            caminhoImagem = `${BASE_PATH}/${caminhoImagem.replace(/^\.\//, '').replace(/^\//, '')}`;
+        }
+        imgElement.src = caminhoImagem;
+    
+    const imgElement = document.getElementById("storyImg");
+    imgElement.src = caminhoImagem;
+    document.getElementById("storyLegenda").innerText = story.legenda;
+    document.getElementById("storiesContador").innerText = `${storyIndexAtivo + 1} / ${storiesAtuais.length}`;
     }
 
     function navegarStories(direcao) {
