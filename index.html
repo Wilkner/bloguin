@@ -395,45 +395,32 @@
     }
 }
 
-    function parseFrontMatter(textoPuro) {
-        console.log("DEBUG - Conteúdo bruto recebido:", textoPuro.substring(0, 50));
-        
-        // 1. Limpa espaços em branco e garante formato universal de quebra de linha
-        const textoLimpo = textoPuro.trim();
-        
-        // 2. Verifica se o texto realmente começa com o delimitador
-        if (!textoLimpo.startsWith("---")) {
-            return { meta: {}, corpo: textoPuro };
-        }
-
-        const partes = textoLimpo.split("---");
-        if (partes.length < 3) return { meta: {}, corpo: textoPuro };
-        
-        const blocoMeta = partes[1];
-        const corpo = partes.slice(2).join("---").trim();
-        
-        // 3. Usa regex para dividir por \r\n ou \n, garantindo compatibilidade entre Windows/GitHub
-        const linhas = blocoMeta.split(/\r?\n/);
-        const meta = {};
-        
-        linhas.forEach(linha => {
+function parseFrontMatter(textoPuro) {
+    // Garante que o texto esteja limpo
+    const texto = textoPuro.trim();
+    
+    // Divide o arquivo em 3 partes: antes do ---, o bloco meta, e o resto (corpo)
+    const partes = texto.split("---");
+    
+    // Se não tiver delimitadores, retorna tudo como corpo (evita quebrar o modal)
+    if (partes.length < 3) return { meta: {}, corpo: texto };
+    
+    const blocoMeta = partes[1];
+    const corpo = partes.slice(2).join("---").trim(); // Junta tudo o que vem depois dos delimitadores
+    
+    const meta = {};
+    // Regex para pegar chave: valor, ignorando espaços extras
+    blocoMeta.split(/\r?\n/).forEach(linha => {
+        if (linha.includes(':')) {
             const index = linha.indexOf(":");
-            if (index !== -1) {
-                // Limpa a chave: remove espaços e caracteres de controle (como \r)
-                const chaveRaw = linha.substring(0, index).trim();
-                const chave = chaveRaw.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                
-                // Valor pode conter ':' (como em URLs), então unimos de volta caso necessário
-                const valor = linha.substring(index + 1).trim();
-                
-                if (chave) {
-                    meta[chave] = valor;
-                }
-            }
-        });
-        
-        return { meta, corpo };
-    }
+            const chave = linha.substring(0, index).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            const valor = linha.substring(index + 1).trim();
+            if (chave) meta[chave] = valor;
+        }
+    });
+    
+    return { meta, corpo };
+}
 
     
 
