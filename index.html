@@ -455,7 +455,11 @@
             if (!response.ok) throw new Error("Não encontrou o arquivo físico: " + caminhoCorreto);
             
             const textoPuro = await response.text();
+            console.log("TEXTO LIDO DO ARQUIVO:", textoPuro); // Veja se a linha 'video:' aparece aqui!
             const payload = parseFrontMatter(textoPuro);
+            console.log("PAYLOAD APÓS PARSE:", payload); // Veja se a chave 'video' está aqui dentro
+
+            
             
             // 🔥 CORREÇÃO BLINDADA: Limpa chaves do objeto meta para garantir compatibilidade GitHub/Windows
             const meta = {};

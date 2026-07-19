@@ -7,7 +7,7 @@ ia_texto: False
 ia_video: True
 ia_stories: False
 image: assets/images/david_michelangelo.jpg
-video:https://youtu.be/GaxAh4d_SyM
+video: https://youtu.be/GaxAh4d_SyM
 legenda: David de Michelangelo
 camera: samsung Galaxy S24 Ultra
 latitude: 43.776718
