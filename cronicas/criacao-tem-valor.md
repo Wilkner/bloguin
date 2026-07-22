@@ -6,9 +6,9 @@ data_viagem: 2026-06-17
 ia_texto: False
 ia_video: True
 ia_stories: False
-image: assets/images/criacao-tem-valor.jpg
+image: assets/images/criacao-tem-valor.jpg, assets/images/criacao-tem-valor_01.jpg, assets/images/criacao-tem-valor_02.jpg, assets/images/criacao-tem-valor_03.jpg, assets/images/criacao-tem-valor_04.jpg
 video: https://youtu.be/kpVQqzuF9eg
-legenda: Raffaellino Del Garbo sobre a Ressureição
+legenda: Raffaellino Del Garbo sobre a Ressureição, Vamos para a Anunciação 01/Infinito, Vamos para a Anunciação 02/Infinito, Vamos para a Anunciação 03/Infinito, Vamos para a Anunciação 04/Infinito, 
 camera: samsung Galaxy S24 Ultra
 latitude: 43.7768
 longitude: 11.2589
@@ -16,23 +16,15 @@ longitude: 11.2589
 
 Nosso planejamento do segundo dia incluía visitarmos a Galleria dell'Accademia di Firenze para vermos David de Michelangelo e, depois, seguirmos para a Galeria Uffizi para encontrar inúmeras obras incríveis dos grandes da Renascença e de outros períodos da história da arte.
 
-
-
 Na entrada da Galleria dell'Accademia vimos o "golpe das obras de arte impressas em A3 e colocadas no chão": com o aglomerado de pessoas, filas, vem e vai, existem aquelas mais distraídas que "pisam" sem querer no "mostruário" do vendedor, que vai atrás do transeunte e o constrange/impõe a comprar o "produto danificado". No entanto, uma mulher falava ao celular enquanto caminhava e pisou plenamente nas obras. Ela de fato não viu as folhas no chão e não hesitou em seguir seu caminho. Ah, o golpe? Não rolou dessa vez! A confiança da mulher era tanta que o vendedor nem tentou seguir seu plano falível por encontrar uma adversária a altura. Ainda bem!
-
-
 
 Deu o nosso horário para visitar o Davizão e, ao entrar no museu, na primeira sala, vimos uma escultura imponente ao centro que, confesso, não me impressionou. Eu posso não ter entendido a obra (não peguei áudio-guia), mas olhei, apreciei e foi só. Nem eu tirei foto, acredita? Pesquisei no guia do museu que comprei na saída da visita e a obra é a Giambologna.
 
-
-
 ![Raffaellino Del Garbo sobre a Ressureição](assets/images/criacao-tem-valor.jpg)
-
-
 
 Havia muitas pinturas, todas bem cuidadas, a maioria restauradas e de diferentes períodos, que me deixaram impressionado. Minha ideia era tirar foto de todas elas, inclusive eu comecei: foto da pintura e da plaquinha com o artista, mas logo desisti porque eram tantas... Vi tudo no detalhe e, apesar de criadas a séculos, permanecem lá: firmes, fortes, belas e mexendo com nossas emoções. Da primeira sala, minha favorita foi a obra de Raffaellino Del Garbo sobre a Ressureição: pela imponencia de cristo flutuando, a bandeira que parecia da Inglaterra (e isso me fez pesquisar depois: a bandeira, na realidade, representa o Estandarte da Ressurreição, simbolizando a vitória de Cristo sobre a morte e o pecado. Olha que interesssante...), as diferentes reações das pessoas que estavam ao redor do túmulo representadas ao se depararem com cristo vivo.
 
-
+![Olha aqui um exemplo da anunciação...](assets/images/criacao-tem-valor_02.jpg)
 
 A primeira sala me fez refletir sobre confiança, personalidade e interpretação. Você já ouviu a frase "tem espaço para todo mundo no mercado", principalmente num contexto de carreira e concorrência? Essa analogia surgiu na minha cabeça porque, naquele espaço, reparei na quantidade de pinturas representando o trecho bíblico da "anunciação", com o anjo Gabriel levando a notícia à Virgem Maria. Pensei: o que essa quantidade de obras com mensagens iguais, mas em formas diferentes, significava? A resposta veio como um "click" na minha cabeça: cada artista evidenciou lindamente sua visão de mundo para o momento, com os detalhes, nuances, reações e simbologias que mais os representavam - ou a partir do pedido e descrição de alguém. O estalo aconteceu porque eu concluí que todas essas obras estavam lá, com pessoas do mundo inteiro sendo atraídas para algum dos quadros pelo motivo ou aspecto X enquanto outras iriam na direção oposta e observariam mais de perto algo que chamou sua atenção na pintura Y. É real: tem espaço para todos!
 

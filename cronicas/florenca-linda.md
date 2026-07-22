@@ -6,9 +6,9 @@ data_viagem: 2026-06-16
 ia_texto: False
 ia_video: True
 ia_stories: False
-image: assets/images/florenca-linda.jpg
+image: assets/images/florenca-linda.jpg, assets/images/florenca-linda_01.jpg, assets/images/florenca-linda_02.jpg, assets/images/florenca-linda_03.jpg, assets/images/florenca-linda_04.jpg, assets/images/florenca-linda_05.jpg
 video: https://youtu.be/BrfS0SszLyA
-legenda: Vista da praça Michelangelo
+legenda: Vista da praça Michelangelo, Mais uma vista da cidade pela praça Michelangelo, Olha eu aqui na praça Michelagenlo olhando a cidade toda, Estávamos na saída da galeria Uffizi quando vimos o lindo Palácio Vecchi de cima, Portao da cidade de Florença, Estátua de Dante Alighieri em frente à Basílica di Santa Croce
 camera: samsung Galaxy S24 Ultra
 latitude: 43.7631
 longitude: 11.264
@@ -20,18 +20,11 @@ Agora, quero te contar sobre Florença, a cidade que despertou meus melhores mom
 
 Chegamos em Florença de trem. A estação, enorme comparada à de La Spezia, já mostrou uma diferença substancial além do tamanho: era vibrante e movimentada! Tentamos pegar um Uber, mas descobrimos - perdendo um bom tempo - que essa opção não funcionava na cidade. A fila para táxi estava enorme. Fomos pra hospedagem de ônibus. Santo Google Maps!
 
-
-
 Caminhamos do ponto de ônibus para a hospedagem, que ficava bem próxima da Basilica di Santa Croce. Por ali, já começamos aquele momento de olhar os prédios, ruas totalmente históricos e concluir: uauuuu! A hospedagem foi uma experiência a parte: era num prédio antigo, de porta enorme, pesada, mas com um puxador muito charmoso. O apartamento recebeu o apelido de Calabouço, pois era uma missão digna de lacaios profissionais entrar e sair: a porta era difíssilima de abrir.
-
-
 
 Como todos os dias de chegada a novas cidades, fomos ao mercado. Olhar as prateleiras e encontrar as diferenças de produtos em comparação ao que tem no Brasil: é molho de tomate, queijos, pães, biscoitos, bolachas, cervejas, vinhos... Gostamos muito!
 
 
-
 Para o primeiro dia, fomos encontrar um ex-colega de trabalho da Joy em um restaurante distante 3 km da hospedagem. Caminhando até o destino, pudemos ver o movimento da cidade, os monumentos nas praças, prédios históricos, esculturas e obras de arte, tudo ao ar livre. Era impossível não olhar para todos os lados ao mesmo tempo. Queríamos parar e ver de perto, ver o que era, mas fomos firmes em seguir para o restaurante. Ainda assim foi impressionante!
-
-
 
 Depois de conversarmos bastante, apreciarmos um bom vinho e excelente companhia, voltamos para a hospedagem novamente caminhando. Paramos na ponte Ponte Santa Trinita para vermos a Ponte Vecchio e seu lindo visual espelhado na agua do Rio Arno. À noite, estava agradável, convidativa e pudemos encerrar o primeiro dia empolgados!

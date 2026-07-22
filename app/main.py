@@ -137,7 +137,7 @@ async def publicar_cronica(
                 shutil.copyfileobj(video.file, buffer)
 
         # Geração limpa do arquivo .txt com o Front Matter estruturado
-        txt_destino = f"cronicas/{id_cronica}.txt"
+        txt_destino = f"cronicas/{id_cronica}.md"
         conteudo_txt = f"""---
 title: {titulo}
 destino: {destino}
